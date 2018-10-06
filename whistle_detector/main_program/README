@@ -1,0 +1,13 @@
+type make to compile the main program for whistle detector
+
+Try to form the wav file into the csv file like 10k_sin_noise.wav.csv 
+
+and then into the csv file in command line:
+
+Ex: 
+    ./detect 10k_sin_noise.wav.csv 1 1 
+
+    first argument:     1 means do the detection 0 means only do spectrogram
+    second argument:    channel number: mono for 1 and stereo for 2
+
+    If you want to save the matrix, try to change the path in dave_data function in detection_algorithm.cpp and try to use it like line 300
