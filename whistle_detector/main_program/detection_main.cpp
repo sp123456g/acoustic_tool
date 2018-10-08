@@ -23,6 +23,9 @@
 // Remember to compile STFT.cpp as well
 
 using namespace std;
+
+void saveData(vector<vector<float> > ,int , int , float);
+
 int main(int argc, char* argv[]){
 
 // declare the constant 
@@ -55,7 +58,7 @@ int main(int argc, char* argv[]){
         int     channel         = 1;
         float   SNR_threshold   = 10;
         float   frq_low         = 3000;
-        float   frq_high        = 40000;
+        float   frq_high        = 10000;
         float   overlap         = 0.9;
 //----------------------------------------------------------
 
@@ -103,9 +106,23 @@ int main(int argc, char* argv[]){
 clock_t t_one;
 t_one =clock();
 
+clock_t t_stft;
+t_stft = clock();
+
         vector<whistle> whistle_list;
         vector<vector<float> > P   = STFT_with_FFTW3f(input_x,fs,N,overlap,window_type);   
 // P: row is frequency and column is time: x time and y frequency
+
+//time for STFT
+t_stft = (clock()-t_stft);
+float STFT_time = (float)t_stft/CLOCKS_PER_SEC;
+cout<<"\nSTFT time:"<<STFT_time<<" seconds"<<endl;
+
+
+//time start for detection 
+clock_t t_two;
+t_two =clock();
+
 
 //put detection algorithm in
       if(do_detect){
@@ -113,7 +130,13 @@ t_one =clock();
         whistle_list = check_result(P,fs,N,overlap);        
       }
 
-//time end
+// detection time end
+t_two = (clock()-t_two);
+float detection_time = (float)t_two/CLOCKS_PER_SEC;
+cout<<"\nDetection time:"<<detection_time<<" seconds"<<endl;
+
+
+//total time end
 t_one = (clock()-t_one);
 float total_time = (float)t_one/CLOCKS_PER_SEC;
 cout<<"\nTotal time:"<<total_time<<" seconds"<<endl;
@@ -121,9 +144,9 @@ cout<<"\nTotal time:"<<total_time<<" seconds"<<endl;
         if(!whistle_list.empty()){
             cout<<"Whistle exist!"<<endl;
             for(int i=0;i<whistle_list.size();i++){
-                cout<<"whistle_"<<i<<" start frequency="<<whistle_list[i].start_frq<<endl;
-                cout<<"whistle_"<<i<<" end frequency="<<whistle_list[i].end_frq<<endl;
-                cout<<"whistle_"<<i<<" duration="<<whistle_list[i].duration<<endl;
+//                cout<<"whistle_"<<i<<" start frequency="<<whistle_list[i].start_frq<<endl;
+//                cout<<"whistle_"<<i<<" end frequency="<<whistle_list[i].end_frq<<endl;
+//                cout<<"whistle_"<<i<<" duration="<<whistle_list[i].duration<<endl;
                 
             
             }
@@ -131,8 +154,14 @@ cout<<"\nTotal time:"<<total_time<<" seconds"<<endl;
         else 
             cout<<"No whistle!"<<endl;
 
-
+    
 //Save data in matrix format
+        saveData(P,fs,N,overlap);
+
+
+}
+
+void saveData(vector<vector<float> > P,int fs, int N, float overlap ){
     FILE *fp;    
     float power_value;
 
@@ -153,3 +182,4 @@ cout<<"\nTotal time:"<<total_time<<" seconds"<<endl;
             cout<<"df="<<fs/N<<endl;
             cout<<"dt="<<dt<<endl;
 }
+
