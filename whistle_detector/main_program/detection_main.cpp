@@ -63,10 +63,10 @@ int main(int argc, char* argv[]){
 //----------------------------------------------------------
 
     if(argc!=4){
-      cout<<"Usage: ./GaborSTFT_using_function filename do_detect channel_number"<<endl;
-      cout<<"Calculate chirp with noise and do detect for default"<<endl;  
+      cout<<"Usage: ./detect filename.csv do_detect channel_number"<<endl;
+      cout<<"Calculate 96k_fs_1sec.wav.csv for default"<<endl;  
       
-      input = readfile("chirp_with_noise.txt");
+      input = readfile("96k_fs_1sec.wav.csv");
     }
     else{
       cout<<"Calculate for "<<argv[1]<<endl;
@@ -103,25 +103,36 @@ int main(int argc, char* argv[]){
     }
 
 //time start
+//*********************************************
+
+// total time start point
 clock_t t_one;
 t_one =clock();
 
+// stft time start point
 clock_t t_stft;
 t_stft = clock();
+
+//*********************************************
+
 
         vector<whistle> whistle_list;
         vector<vector<float> > P   = spectrogram_yhh(input_x,fs,N,overlap,window_type);   
 // P: row is frequency and column is time: x time and y frequency
 
-//time for STFT
+//time for STFT end 
+//************************************************
 t_stft = (clock()-t_stft);
 float STFT_time = (float)t_stft/CLOCKS_PER_SEC;
 cout<<"\nSTFT time:"<<STFT_time<<" seconds"<<endl;
+//************************************************
 
 
 //time start for detection 
+//************************************************
 clock_t t_two;
 t_two =clock();
+//************************************************
 
 
 //put detection algorithm in
@@ -131,32 +142,37 @@ t_two =clock();
       }
 
 // detection time end
+//************************************************
 t_two = (clock()-t_two);
 float detection_time = (float)t_two/CLOCKS_PER_SEC;
 cout<<"\nDetection time:"<<detection_time<<" seconds"<<endl;
+//************************************************
 
 
 //total time end
+//************************************************
 t_one = (clock()-t_one);
 float total_time = (float)t_one/CLOCKS_PER_SEC;
 cout<<"\nTotal time:"<<total_time<<" seconds"<<endl;
+//************************************************
 
+//check if there is whistle 
         if(!whistle_list.empty()){
             cout<<"Whistle exist!"<<endl;
             for(int i=0;i<whistle_list.size();i++){
+
+// output result if you want 
 //                cout<<"whistle_"<<i<<" start frequency="<<whistle_list[i].start_frq<<endl;
 //                cout<<"whistle_"<<i<<" end frequency="<<whistle_list[i].end_frq<<endl;
 //                cout<<"whistle_"<<i<<" duration="<<whistle_list[i].duration<<endl;
-                
-            
             }
         }
         else 
             cout<<"No whistle!"<<endl;
 
     
-//Save data in matrix format
-        saveData(P,fs,N,overlap);
+//Save data in matrix format for analysing 
+//        saveData(P,fs,N,overlap);
 
 
 }
@@ -165,7 +181,7 @@ void saveData(vector<vector<float> > P,int fs, int N, float overlap ){
     FILE *fp;    
     float power_value;
 
-            fp = fopen("/home/yhhuang/thesis/Matlab/data_for_plot.dat3","w");
+            fp = fopen("./Output_Data/output_data.dat","w");
 
             for(unsigned int i=0;i<P.size();i++){
                 for(unsigned int j=0;j<P[0].size();j++){
