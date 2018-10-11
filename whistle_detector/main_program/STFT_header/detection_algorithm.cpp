@@ -83,7 +83,6 @@ vector<vector<float> > spectrogram_yhh(vector<float> x,int fs,unsigned int N,flo
 
 //vector<vector<float> > matrix
     vector<vector<float> > spectrogram_mat((N/2)+1,vector<float>(loop_num));
-    vector<vector<float> > output((N/2)+1,vector<float>(loop_num));
 //STEP_3 doing fftw loop
     for(int start_index=0;start_index<=x.size()-N;start_index+=no_overlap){
 //get data by window function 
