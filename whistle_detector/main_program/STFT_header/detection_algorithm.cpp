@@ -6,6 +6,7 @@
 //Library: fftw3 library
 //***********************************************************************
 #include "detection_algorithm.h"
+#include <stdlib.h>
 #include <fftw3.h>
 using namespace std;
 //-------------------------------------------------------------------------
@@ -31,7 +32,7 @@ void save_data(std::string filename, FILE *fpp, vector<vector<float> > P, string
 }
 
 
-vector<vector<float> > STFT_with_FFTW3f(vector<float> x,int fs,unsigned int N,float overlap_percent,int win)
+vector<vector<float> > spectrogram_yhh(vector<float> x,int fs,unsigned int N,float overlap_percent,int win)
 {
 //STEP_1 set up window function 
     float   W;
@@ -65,24 +66,23 @@ vector<vector<float> > STFT_with_FFTW3f(vector<float> x,int fs,unsigned int N,fl
       fprintf(stderr, "unknown windowtype!\n");
     }
 //STEP_2 set up fftw plan 
-    float*  in;
-    float*  after_fft;
-    float*  power;
+    double*  in;
+    fftw_complex *after_fft;
+    vector<float>  power(N/2+1,0);
     unsigned int loop_num = 0;
     int     time_index = 0;
  
-    in = new float[N];
-    after_fft = new float[N];
-    power = new float[N+1];
-    fftwf_plan plan;
-    plan = fftwf_plan_r2r_1d(N, in,after_fft,FFTW_R2HC,FFTW_MEASURE);
+    in = new double[N];
+    after_fft = (fftw_complex*) fftw_malloc(sizeof(fftw_complex)*(N/2+1));
+    fftw_plan plan;
+    plan = fftw_plan_dft_r2c_1d(N, in,after_fft,FFTW_ESTIMATE);
 
 //Get the loop number to set up the size of the output matrice
     for(int start_index=0;start_index<=x.size()-N;start_index+=no_overlap)
         loop_num +=1;
 
 //vector<vector<float> > matrix
-    vector<vector<float> > spectrogram_mat(N+1,vector<float>(loop_num));
+    vector<vector<float> > spectrogram_mat((N/2)+1,vector<float>(loop_num));
     vector<vector<float> > output((N/2)+1,vector<float>(loop_num));
 //STEP_3 doing fftw loop
     for(int start_index=0;start_index<=x.size()-N;start_index+=no_overlap){
@@ -91,10 +91,10 @@ vector<vector<float> > STFT_with_FFTW3f(vector<float> x,int fs,unsigned int N,fl
             in[j] = x[i]*window_func[j];    
         }
 //fft 
-        fftwf_execute(plan);
+        fftw_execute(plan);
 // Calculate power and let index 0 = frequency = 1Hz
-        for(int k=0 ;k<N;k++){
-            power[k] = sqrt(pow(after_fft[k],2)+pow(after_fft[N-k],2));
+        for(int k=0 ;k<=N/2;k++){
+            power[k] = sqrt(after_fft[k][0]*after_fft[k][0]+after_fft[k][1]*after_fft[k][1]);
 //Save in the 2 dimensional array
             spectrogram_mat[k][time_index] = power[k];
         }
@@ -102,16 +102,16 @@ vector<vector<float> > STFT_with_FFTW3f(vector<float> x,int fs,unsigned int N,fl
     }
 // the spectrogram_mat variable is now x:time sample, y:frequency   
 
-        fftwf_destroy_plan(plan);
-//        fftwf_cleanup();
+        fftw_destroy_plan(plan);
+//        fftw_cleanup();
 //output: row is frequency and column is time, just means x is time and y is frequency
 //But remember to change the index to exact frequency and time 
 
 // only use date from 0 Hz ~ fs/2 Hz (Nyquist frequency)
-        for(int i=0;i<=N/2;i++)
-                output[i] = spectrogram_mat[i];
 
-    return(output);
+    cout<<"Row:"<<spectrogram_mat.size()<<", Col:"<<spectrogram_mat[0].size()<<endl;
+    return(spectrogram_mat);
+
 }
 
 unsigned int frequency_mapping(unsigned int input_index, int fs,int N){
@@ -217,11 +217,15 @@ void edge_detector(vector<vector<float> > &P,float SNR_threshold,unsigned int ju
             if(j>=time_column.size()-jump_num)
                 P[j][i] = 0;
             else{
-                 if(time_column[j-jump_num]!=0 || time_column[j+jump_num]!=0)    
+                 if(time_column[j-jump_num]!=0 || time_column[j+jump_num]!=0){    
                     SNR= 10*log(time_column[j]/(time_column[j-jump_num]*0.5+time_column[j+jump_num]*0.5));
-                if(SNR > SNR_threshold){
-                    P_new[j][i] = 1;
-                }
+                    if(SNR > SNR_threshold)
+                        P_new[j][i] = 1;
+                 }
+                 else if(time_column[j]!=0) 
+                     P_new[j][i] = 1;
+                 else 
+                     P_new[j][i] = 0;
             }
         }
     }
@@ -232,6 +236,7 @@ void edge_detector(vector<vector<float> > &P,float SNR_threshold,unsigned int ju
 void moving_square(vector<vector<float> > &P,unsigned int fs, unsigned int N, float overlap,float frq1,float frq2){
 //moving square and band pass filter with frq1 ~ frq2 Hz
     vector<vector<float> >     P_new(P.size(),vector<float>(P[0].size()));
+
     
     vector<int> x_buf;
     vector<int> y_buf;
@@ -288,15 +293,17 @@ void detect_whistle(vector<vector<float> > &P,int fs,unsigned int N,float overla
         
     FILE *fp_first, *fp_second, *fp_third, *fp_fourth, *fp_fifth;
 //step5: save data before detection    
-//    save_data("original_P",fp_first,P);
+//    save_data("1_P",fp_first,P);
 //step1: simple moving average for each frequency(not neccessary)
 //    simple_mov_avg(P,10);
 //step2: median filter
     median_filter(P);
+//    save_data("2_P",fp_second,P);
 //step3: edge_detector
-//   edge_detector(P,SNR_threshold,5);
+   edge_detector(P,SNR_threshold,5);
+//    save_data("3_P",fp_third,P);
 //step4: using moving square for narrow band checking 
-//    moving_square(P,fs,N,overlap,frq_low,frq_high);
+    moving_square(P,fs,N,overlap,frq_low,frq_high);
 //step5: save data after detection    
 //    save_data("final_P",fp_fifth,P);
 }

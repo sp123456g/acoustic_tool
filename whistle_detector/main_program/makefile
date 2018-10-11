@@ -1,4 +1,4 @@
-LIBS = -lfftw3f 
+LIBS = -lfftw3 
 CXX = g++ 
 
 all:	detect

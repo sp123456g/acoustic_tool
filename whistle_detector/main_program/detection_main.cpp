@@ -52,7 +52,7 @@ int main(int argc, char* argv[]){
 //----------------------------------------------------------
    
         int     fs              = 96000;     // sample rate
-        int     N               = round((double)fs/46.875);
+        int     N               = round((float)fs/46.875);
         bool    do_detect       = true;      
         int     window_type     = 1;         
         int     channel         = 1;
@@ -110,7 +110,7 @@ clock_t t_stft;
 t_stft = clock();
 
         vector<whistle> whistle_list;
-        vector<vector<float> > P   = STFT_with_FFTW3f(input_x,fs,N,overlap,window_type);   
+        vector<vector<float> > P   = spectrogram_yhh(input_x,fs,N,overlap,window_type);   
 // P: row is frequency and column is time: x time and y frequency
 
 //time for STFT
@@ -156,7 +156,7 @@ cout<<"\nTotal time:"<<total_time<<" seconds"<<endl;
 
     
 //Save data in matrix format
-//        saveData(P,fs,N,overlap);
+        saveData(P,fs,N,overlap);
 
 
 }
@@ -165,7 +165,7 @@ void saveData(vector<vector<float> > P,int fs, int N, float overlap ){
     FILE *fp;    
     float power_value;
 
-            fp = fopen("/home/yhhuang/thesis/Matlab/data_for_plot.dat2","w");
+            fp = fopen("/home/yhhuang/thesis/Matlab/data_for_plot.dat3","w");
 
             for(unsigned int i=0;i<P.size();i++){
                 for(unsigned int j=0;j<P[0].size();j++){
