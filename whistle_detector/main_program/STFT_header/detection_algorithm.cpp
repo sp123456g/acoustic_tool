@@ -33,8 +33,19 @@ void save_data(std::string filename, FILE *fpp, vector<vector<float> > P, string
 }
 
 
-vector<vector<float> > spectrogram_yhh(vector<float> x,int fs,unsigned int N,float overlap_percent,int win)
+vector<vector<float> > spectrogram_yhh(spectrogram_input &sp_in)
 {
+//STEP_0 set up all variable;
+
+    vector<float>   x       = sp_in.voltage_in;
+    int             fs      = sp_in.fs;
+    unsigned int    N       = sp_in.N;
+    int             win     = sp_in.win;
+    float           sen     = sp_in.sensitivity;
+    float           gain    = sp_in.gain;
+
+    float           overlap_percent = sp_in.overlap;
+
 //STEP_1 set up window function 
     float   W;
     int     overlap = round(overlap_percent*N);
@@ -85,6 +96,7 @@ vector<vector<float> > spectrogram_yhh(vector<float> x,int fs,unsigned int N,flo
 
 //vector<vector<float> > output spectrogram matrix
     vector<vector<float> > spectrogram_mat((N/2)+1,vector<float>(loop_num));
+    vector<vector<float> > PSD_mat((N/2)+1,vector<float>(loop_num));
 //STEP_3 doing STFT
     for(int start_index=0;start_index<=x.size()-N;start_index+=no_overlap){
     //I. get data by window function 
@@ -99,8 +111,13 @@ vector<vector<float> > spectrogram_yhh(vector<float> x,int fs,unsigned int N,flo
         
         for(int k=0 ;k<=N/2;k++){
             power[k] = sqrt(after_fft[k][0]*after_fft[k][0]+after_fft[k][1]*after_fft[k][1]);
-    //IV. Save in the 2 dimensional array
             spectrogram_mat[k][time_index] = power[k];
+
+    // calculate exact power 
+            power[k] = (2*pow(power[k],2))/(fs*pow(window_func[k],2));
+    //IV. Save in the 2 dimensional array
+            float PSD = 10*log(power[k]) - sen + gain;
+            PSD_mat[k][time_index] = PSD;
         }
         time_index++;
     }
@@ -110,10 +127,13 @@ vector<vector<float> > spectrogram_yhh(vector<float> x,int fs,unsigned int N,flo
 
 //spectrogram_mat: row is frequency and column is time, just means x is time and y is frequency
 //But remember to change the index to exact frequency and time using df and dt
+    
+    sp_in.PSD = PSD_mat;
 
     return(spectrogram_mat);
-
 }
+
+
 
 unsigned int frequency_mapping(unsigned int input_index, int fs,int N){
 // input_index is the frequency index in spectrogram_mat which was output by spectrogram_yhh()
@@ -301,14 +321,14 @@ void detect_whistle(vector<vector<float> > &P,int fs,unsigned int N,float overla
     simple_mov_avg(P,10);
 //step2: median filter
 //    median_filter(P);
-//    save_data("2_P",fp_second,P);
+    save_data("2_P",fp_second,P);
 //step3: edge_detector
    edge_detector(P,SNR_threshold,5);
-//    save_data("3_P",fp_third,P);
+    save_data("3_P",fp_third,P);
 //step4: using moving square for narrow band checking 
     moving_square(P,fs,N,overlap,frq_low,frq_high);
 //step5: save data after detection    
-//    save_data("final_P",fp_fifth,P);
+    save_data("final_P",fp_fifth,P);
 }
 
 

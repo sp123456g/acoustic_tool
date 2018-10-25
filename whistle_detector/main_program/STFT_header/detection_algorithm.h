@@ -26,8 +26,8 @@ const float pi = 3.1415926;
 //4. void detect_whistle(arma::mat &P,float threshold);
 //5. void detect_click();
 //-------------------------------------------------------------------------
-
-std::vector<std::vector<float> > spectrogram_yhh(std::vector<float>, int fs=96000,unsigned int N=2048,float overlap_percent=0.9, int win=1);
+struct spectrogram_input;
+std::vector<std::vector<float> > spectrogram_yhh(spectrogram_input &sp_in);
 //Use fft in FFTW package, is faster than arma package
 //------------------------------------------------------------------------
 // output: matrix with x:time(an element stand for a dt), y:frequency(an element stand for a df)
@@ -37,6 +37,7 @@ std::vector<std::vector<float> > spectrogram_yhh(std::vector<float>, int fs=9600
 //               N: window length 
 // overlap_percent: overlap_percentage of overlap    
 //             win: window type, 0 is rectangular 1 is hanning
+//             sen: Sensitivity of microphone or hydrophone
 //-------------------------------------------------------------------------
 
 unsigned int frequency_mapping(unsigned int input_index,int fs,int N);
@@ -49,6 +50,18 @@ struct xy_index{
     
     int x;
     int y;
+};
+
+struct spectrogram_input{
+
+    std::vector<float>      voltage_in;
+    int                     fs;
+    unsigned int            N;
+    float                   overlap;
+    int                     win;
+    float                   sensitivity;
+    float                   gain;  
+    std::vector<std::vector<float> >  PSD;
 };
 
 class whistle{
@@ -76,4 +89,5 @@ class whistle{
 void detect_whistle(std::vector<std::vector<float> > &P,int fs,unsigned int N,float overlap,float SNR_threshold=10,float frq_low=3000,float frq_high=10000);
 
 std::vector<whistle> check_result(std::vector<std::vector<float> > P,int fs, unsigned int N,float overlap);
+
 #endif

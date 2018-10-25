@@ -60,6 +60,8 @@ int main(int argc, char* argv[]){
         float   frq_low         = 3000;
         float   frq_high        = 10000;
         float   overlap         = 0.9;
+        float   sen             = -165;
+        float   gain            = 0;
 //----------------------------------------------------------
 
     if(argc!=4){
@@ -101,6 +103,20 @@ int main(int argc, char* argv[]){
             j++;
         }
     }
+    
+//set input to spectrogram_input
+        spectrogram_input sp_input;
+
+        sp_input.voltage_in = input_x;
+        sp_input.fs         = fs;
+        sp_input.N          = N;
+        sp_input.win        = window_type;
+        sp_input.sensitivity= sen;
+        sp_input.gain       = gain;
+        sp_input.overlap    = overlap;
+
+        
+
 
 //time start
 //*********************************************
@@ -117,7 +133,8 @@ t_stft = clock();
 
 
         vector<whistle> whistle_list;
-        vector<vector<float> > P   = spectrogram_yhh(input_x,fs,N,overlap,window_type);   
+        vector<vector<float> > P   = spectrogram_yhh(sp_input);   
+        saveData(sp_input.PSD,fs,N,overlap);
 // P: row is frequency and column is time: x time and y frequency
 
 //time for STFT end 
