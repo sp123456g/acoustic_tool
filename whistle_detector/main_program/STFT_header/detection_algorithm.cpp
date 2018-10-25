@@ -114,6 +114,8 @@ vector<vector<float> > spectrogram_yhh(spectrogram_input &sp_in)
             spectrogram_mat[k][time_index] = power[k];
 
     // calculate exact power 
+    // P = ((abs(power))^2 )*2/(fs*w(n)^2)
+    // PSD = 10log(P) - sensitivity
             power[k] = (2*pow(power[k],2))/(fs*pow(window_func[k],2));
     //IV. Save in the 2 dimensional array
             float PSD = 10*log(power[k]) - sen + gain;
