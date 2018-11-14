@@ -226,14 +226,22 @@ void median_filter(vector<vector<float> > &P){
 
 // Edge_detector function
 // Can change jump number to higher for wider edge and lower for narrow edge 
-void edge_detector(vector<vector<float> > &P,float SNR_threshold,unsigned int jump_num){
+void edge_detector(vector<vector<float> > &P,float SNR_threshold,unsigned int jump_num,unsigned int N, int fs, float frq1, float frq2){
 
     float SNR=0;
     vector<vector<float> > P_new(P.size(),vector<float>(P[0].size())); 
+// lower and higher boundary tolerance 5 
+    int low_bound = round(N*frq1/fs) - 5; 
+    int high_bound = round(N*frq2/fs) + 5;
+    if(low_bound < 0 )
+        low_bound = 0;
+    if(high_bound > P.size())
+        high_bound = P.size();
+    
     for(int i=0;i<P[0].size();i++){
 
         vector<float> time_column(P.size(),0);
-        for(int k=0;k<P.size();k++){
+        for(int k=low_bound;k<high_bound;k++){
             time_column[k] = P[k][i];
         }
              
@@ -333,7 +341,7 @@ cout<<"simple moving average time:"<<(float)(toc_1-tic_1)/CLOCKS_PER_SEC<<endl;
 clock_t tic_2;
 tic_2 = clock();
 
-  edge_detector(P,SNR_threshold,5);
+  edge_detector(P,SNR_threshold,5,N,fs,frq_low,frq_high);
 
 clock_t toc_2;
 toc_2 = clock();
