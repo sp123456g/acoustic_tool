@@ -320,17 +320,36 @@ void detect_whistle(vector<vector<float> > &P,int fs,unsigned int N,float overla
 //step0: save data before detection if needed   
 //    save_data("1_P",fp_first,P);
 //step1: simple moving average for each frequency(not neccessary)
+clock_t tic_1;
+tic_1 = clock();
     simple_mov_avg(P,10);
+clock_t toc_1;
+toc_1 = clock();
+cout<<"simple moving average time:"<<(float)(toc_1-tic_1)/CLOCKS_PER_SEC<<endl;
 //step2: median filter
 //    median_filter(P);
-    save_data("2_P",fp_second,P);
+//    save_data("2_P",fp_second,P);
 //step3: edge_detector
-   edge_detector(P,SNR_threshold,5);
-    save_data("3_P",fp_third,P);
+clock_t tic_2;
+tic_2 = clock();
+
+  edge_detector(P,SNR_threshold,5);
+
+clock_t toc_2;
+toc_2 = clock();
+cout<<"edge_detector time:"<<(float)(toc_2-tic_2)/CLOCKS_PER_SEC<<endl;
+//    save_data("3_P",fp_third,P);
 //step4: using moving square for narrow band checking 
+clock_t tic_3;
+tic_3 = clock();
+
     moving_square(P,fs,N,overlap,frq_low,frq_high);
+clock_t toc_3;
+toc_3 = clock();
+
+cout<<"moving square time:"<<(float)(toc_3-tic_3)/CLOCKS_PER_SEC<<endl;
 //step5: save data after detection    
-    save_data("final_P",fp_fifth,P);
+//    save_data("final_P",fp_fifth,P);
 }
 
 
